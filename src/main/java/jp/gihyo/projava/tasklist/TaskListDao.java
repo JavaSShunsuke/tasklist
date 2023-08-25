@@ -57,14 +57,23 @@ public class TaskListDao {
                 taskItem.id());
         return number2;
     }
-    public  <LIst> List<HomeController.TaskItem> searchMonth(String month,String checkDone){
+    public  <LIst> List<HomeController.TaskItem> searchMonth(String match_type,String month,String checkedDone,String search_task){
 
         String query;
-        if (checkDone.equals("on")) {
+//            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+//                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '" + search_task + "%'";
+        if (match_type.equals("prefix_match")) {
             query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
-                    "AND done='未'";
-        } else {
-            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'";
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '" + search_task + "%'";
+        } else if (match_type.equals("Partial_Match")) {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '%" + search_task + "%'";
+        } else if (match_type.equals("Backward_match")) {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '%" + search_task + "'";
+        }else {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '" + search_task + "'";
         }
         List<Map<String, Object>> result = this.jdbcTemplate.queryForList(query);
         List<HomeController.TaskItem> list = result.stream().map(

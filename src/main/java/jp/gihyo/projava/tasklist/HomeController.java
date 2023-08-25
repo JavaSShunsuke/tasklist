@@ -71,10 +71,13 @@ public class HomeController {
 
     @GetMapping("/search_month")
     String searchMonth(Model model,
+                       @RequestParam("match_type") String match_type,
                        @RequestParam("month") String month,
-                       @RequestParam("checkedDone") String checked) {
+                       @RequestParam("checkedDone") String checkedDone,
+                       @RequestParam("search_task") String search_task)
+    {
         List<TaskItem> taskItems = null;
-            taskItems = this.dao.searchMonth(month,checked);
+            taskItems = this.dao.searchMonth(match_type,month,checkedDone,search_task);
 
         model.addAttribute("taskList", taskItems);
         return "home";

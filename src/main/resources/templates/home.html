@@ -37,10 +37,15 @@
 <!--                </form>-->
                 <form action="/search_month">
                     <div class="search-month">
+                            <input type="radio" name="match_type" value="prefix_match">前方一致
+                            <input type="radio" name="match_type" value="Partial_Match" checked>部分一致
+                            <input type="radio" name="match_type" value="Backward_match">後方一致
+                        <br>
                         <input type="month" name="month" id="search_month"/>
+                        <input type="hidden" id="checkedDone_off" name="checkedDone" value="off"/>
+                        <input type="text" name="search_task" id="search_task">
                         <button type="submit">検索
                         </button>
-                        <input type="hidden" id="checkedDone_off" name="checkedDone" value="off"/>
                         <input type="checkbox" id="checkedDone" name="checkedDone" onchange="change()"/>
                         <label for="checkedDone">完了済みを非表示</label>
                     </div>
