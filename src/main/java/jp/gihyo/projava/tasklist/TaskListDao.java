@@ -1,10 +1,7 @@
 package jp.gihyo.projava.tasklist;
 
-import jp.gihyo.projava.tasklist.HomeController.TaskItem;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -12,11 +9,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.TreeSet;
 
 @Service
 public class TaskListDao {
+    private final static String TABLE_NAME = "tasklist";
+
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -24,26 +21,26 @@ public class TaskListDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void add(TaskItem taskItem) {
-        SqlParameterSource param = new BeanPropertySqlParameterSource(taskItem);
-        SimpleJdbcInsert insert =
-                new SimpleJdbcInsert(jdbcTemplate).withTableName("TaskList");
-        insert.execute(param);
+    public int add(HomeController.TaskItem item){
+        SqlParameterSource param = new BeanPropertySqlParameterSource(item);
+        SimpleJdbcInsert insert = new SimpleJdbcInsert(this.jdbcTemplate)
+                .withTableName(TABLE_NAME);
+        return insert.execute(param);
     }
 
-    public List<TaskItem> findAll() {
-        String query = "SELECT * FROM tasklist";
-
-        List<Map<String, Object>> result = jdbcTemplate.queryForList(query);
-        List<TaskItem> taskItems = result.stream()
-                .map((Map<String, Object> row) -> new TaskItem(
+    public <LIst> List<HomeController.TaskItem> findAll(){
+        String query = "SELECT * FROM " + TABLE_NAME;
+        List<Map<String, Object>> result = this.jdbcTemplate.queryForList(query);
+        List<HomeController.TaskItem> list = result.stream().map(
+                (Map<String, Object> row) -> new HomeController.TaskItem(
                         row.get("id").toString(),
                         row.get("task").toString(),
                         row.get("deadline").toString(),
-                        (Boolean) row.get("done")))
-                .toList();
+                        row.get("memo").toString(),
+                        (Boolean)row.get("done")
 
-        return taskItems;
+                )).toList();
+        return list;
     }
 
     public int delete(String id) {
@@ -51,13 +48,43 @@ public class TaskListDao {
         return number;
     }
 
-    public int update(TaskItem taskItem) {
-        int number = jdbcTemplate.update(
-                "UPDATE tasklist SET task = ?, deadline = ?, done = ? WHERE id = ?",
+    public int update(HomeController.TaskItem taskItem){
+        int number2 = jdbcTemplate.update("update tasklist set task=?, deadline=?, done=?, memo=? where id = ?",
                 taskItem.task(),
                 taskItem.deadline(),
                 taskItem.done(),
+                taskItem.memo(),
                 taskItem.id());
-        return number;
+        return number2;
+    }
+    public  <LIst> List<HomeController.TaskItem> searchMonth(String match_type,String month,String checkedDone,String search_task){
+
+        String query;
+//            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+//                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '" + search_task + "%'";
+        if (match_type.equals("prefix_match")) {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '" + search_task + "%'";
+        } else if (match_type.equals("Partial_Match")) {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '%" + search_task + "%'";
+        } else if (match_type.equals("Backward_match")) {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '%" + search_task + "'";
+        }else {
+            query = "SELECT * FROM " + TABLE_NAME + " WHERE deadline like '" + month + "%'" +
+                    "AND done " + (checkedDone.equals("on") ? "='未'":"like '%'")+ "AND task like '" + search_task + "'";
+        }
+        List<Map<String, Object>> result = this.jdbcTemplate.queryForList(query);
+        List<HomeController.TaskItem> list = result.stream().map(
+                (Map<String, Object> row) -> new HomeController.TaskItem(
+                        row.get("id").toString(),
+                        row.get("task").toString(),
+                        row.get("deadline").toString(),
+                        row.get("memo").toString(),
+                        (Boolean)row.get("done")
+
+                )).toList();
+        return list;
     }
 }

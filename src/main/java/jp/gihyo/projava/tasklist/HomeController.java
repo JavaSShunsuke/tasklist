@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -14,18 +15,18 @@ import java.util.UUID;
 
 @Controller
 public class HomeController {
+    private final TaskListDao dao;
+
     @Autowired
     public HomeController(TaskListDao dao) {
         this.dao = dao;
     }
 
-    private final TaskListDao dao;
-
-    record TaskItem(String id, String task, String deadline, boolean done) {
+    record TaskItem(String id, String task, String deadline, String memo, boolean done) {
 
     }
 
-    private List<TaskItem> taskItems = new ArrayList<>();
+//    private List<TaskItem> taskItems = new ArrayList<>();
 
     @RequestMapping(value = "/hello")
     String hello(Model model) {
@@ -35,25 +36,25 @@ public class HomeController {
 
     @GetMapping("/list")
     String listItems(Model model) {
-        List<TaskItem> taskItems = dao.findAll();
+        List<TaskItem> taskItems = this.dao.findAll();
         model.addAttribute("taskList", taskItems);
         return "home";
     }
 
     @GetMapping("/add")
     String addItem(@RequestParam("task") String task,
-                   @RequestParam("deadline") String deadline) {
+                   @RequestParam("deadline") String deadline,
+                   @RequestParam("memo") String memo){
         String id = UUID.randomUUID().toString().substring(0, 8);
-        TaskItem item = new TaskItem(id, task, deadline, false);
-        taskItems.add(item);
-        dao.add(item);
+        TaskItem item = new TaskItem(id, task, deadline,memo, false);
+        this.dao.add(item);
 
         return "redirect:/list";
     }
 
     @GetMapping("/delete")
     String deleteItem(@RequestParam("id") String id) {
-        dao.delete(id);
+        this.dao.delete(id);
         return "redirect:/list";
     }
 
@@ -61,9 +62,24 @@ public class HomeController {
     String updateItem(@RequestParam("id") String id,
                       @RequestParam("task") String task,
                       @RequestParam("deadline") String deadline,
+                      @RequestParam("memo") String memo,
                       @RequestParam("done") boolean done) {
-        TaskItem taskItem = new TaskItem(id, task, deadline, done);
-        dao.update(taskItem);
+        TaskItem taskItem = new TaskItem(id, task, deadline, memo,done);
+        this.dao.update(taskItem);
         return "redirect:/list";
+    }
+
+    @GetMapping("/search_month")
+    String searchMonth(Model model,
+                       @RequestParam("match_type") String match_type,
+                       @RequestParam("month") String month,
+                       @RequestParam("checkedDone") String checkedDone,
+                       @RequestParam("search_task") String search_task)
+    {
+        List<TaskItem> taskItems = null;
+            taskItems = this.dao.searchMonth(match_type,month,checkedDone,search_task);
+
+        model.addAttribute("taskList", taskItems);
+        return "home";
     }
 }
